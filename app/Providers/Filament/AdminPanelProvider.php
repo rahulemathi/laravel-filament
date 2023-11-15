@@ -19,6 +19,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use pxlrbt\FilamentSpotlight\SpotlightPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -39,6 +40,9 @@ class AdminPanelProvider extends PanelProvider
             ->userMenuItems([
                 MenuItem::make()->label('settings')->url('')->icon('heroicon-o-cog-6-tooth'),
                 'logout'=>MenuItem::make()->label('logout')
+            ])
+            ->plugins([
+                SpotlightPlugin::make()
             ])
             ->sidebarCollapsibleOnDesktop()
             ->favicon(url:'images/hostinger.png')
