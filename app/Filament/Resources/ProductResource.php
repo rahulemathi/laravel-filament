@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\ProductResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ProductResource\RelationManagers;
+use Illuminate\Database\Eloquent\Model;
 
 class ProductResource extends Resource
 {
@@ -24,6 +25,34 @@ class ProductResource extends Resource
     protected static ?string $navigationLabel = 'Product';
     
     protected static ?int $navigationSort = 0;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    protected static int $globalSearchResultsLimit = 20;
+
+    // protected static ?string $activeNavigationIcon = 'heroicon-o-check-badge'; used to change the icon when its active
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    } // getNavigationBadge
+
+
+    public static function getGloballySearchableAttributes(): array{
+        return ['name','slug','description',];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array{
+        return [
+            'Brand' => $record->brand->name,
+        ];
+    }
+
+
+    public static function getGlobalSearchableEloquentQuery():Builder{
+        return parent::getGlobalSearchableEloquentQuery()->with(['brand']);
+    }
+
 
     protected static ?string $navigationGroup = 'Shop';
 
@@ -69,8 +98,11 @@ class ProductResource extends Resource
                         ]),
 
                         Forms\Components\Section::make('Associations ')->schema([
-                           Forms\Components\Select::make('brand_id')->relationship('brand','name')
-                        ])
+                           Forms\Components\Select::make('brand_id')->relationship('brand','name')->required(),
+                           Forms\Components\Select::make('categories')->relationship('categories','name')->multiple()->required()
+                        ]),
+
+
                     ])
                 
             ]);
@@ -88,7 +120,9 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('price')->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('quantity')->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('published_at')->date()->sortable(),
-                Tables\Columns\TextColumn::make('type')
+                Tables\Columns\TextColumn::make('type'),
+                
+                
             ])
             ->filters([
                 //

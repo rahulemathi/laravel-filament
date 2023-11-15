@@ -1,33 +1,22 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\CategoryResource\RelationManagers;
 
 use Filament\Forms;
 use Filament\Tables;
-use App\Models\Brand;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
-use Filament\Resources\Resource;
-use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Section;
 use Illuminate\Database\Eloquent\Builder;
-use App\Filament\Resources\BrandResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\BrandResource\RelationManagers;
 use Filament\Resources\RelationManagers\RelationManager;
 
-class BrandResource extends Resource
+class ProductsRelationManager extends RelationManager
 {
-    protected static ?string $model = Brand::class;
+    protected static string $relationship = 'products';
 
-    protected static ?int $navigationSort = 1;
-
-    protected static ?string $navigationGroup = 'Shop';
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
-    public static function form(Form $form): Form
+    public function form(Form $form): Form
     {
         return $form
             ->schema([
@@ -58,28 +47,31 @@ class BrandResource extends Resource
             ]);
     }
 
-    public static function table(Table $table): Table
+    public function table(Table $table): Table
     {
         return $table
+            ->recordTitleAttribute('name')
             ->columns([
-                //
-
+                Tables\Columns\ImageColumn::make('image'),
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('url')->label('Website Url')->sortable()->searchable(),
-                Tables\Columns\ColorColumn::make('primary_hex')->label('Primary Color'),
-                Tables\Columns\IconColumn::make('is_visible')->boolean()->sortable()->label('Visibility'),
-                Tables\Columns\TextColumn::make('updated_at')->date()->sortable(),
-
+                Tables\Columns\TextColumn::make('brand.name')->searchable()->sortable()->toggleable(),
+                Tables\Columns\IconColumn::make('is_visible')->searchable()->sortable()->toggleable()->boolean(),
+                Tables\Columns\TextColumn::make('price')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('quantity')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('published_at')->date()->sortable(),
+                Tables\Columns\TextColumn::make('type'),
             ])
             ->filters([
                 //
             ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make(),
+            ])
             ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make()
-                ])
+               Tables\Actions\ActionGroup::make([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+               ])
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -87,21 +79,4 @@ class BrandResource extends Resource
                 ]),
             ]);
     }
-    
-    public static function getRelations(): array
-    {
-        return [
-            //
-            // RelationManagers\ProductsRelationManager::class
-        ];
-    }
-    
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListBrands::route('/'),
-            'create' => Pages\CreateBrand::route('/create'),
-            'edit' => Pages\EditBrand::route('/{record}/edit'),
-        ];
-    }    
 }

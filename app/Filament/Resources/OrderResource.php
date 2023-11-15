@@ -24,6 +24,15 @@ class OrderResource extends Resource
 
     protected static ?string $navigationGroup = 'Shop';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::where('status','=','processing')->count();
+    }//getNavigationBadge this is used to display the count of the items processing
+
+    public static function getNavigationBadgeColor(): string
+    {
+        return static::getModel()::where('status','=','processing')->count()>10?'warning':'primary';
+    }
     public static function form(Form $form): Form
     {
         return $form
@@ -34,20 +43,24 @@ class OrderResource extends Resource
                     Forms\Components\Wizard\Step::make('Order Details')->schema([
                         Forms\Components\TextInput::make('number')->default('OR-'. random_int(100000,999999))->disabled()->dehydrated()->required(),
                         Forms\Components\Select::make('customer_id')->relationship('customer','name')->searchable()->required()->required(),
+                        Forms\Components\TextInput::make('shipping_price')->label('shipping cost')->dehydrated()->numeric()->required(),
                         Forms\Components\Select::make('type')->options([
                             'pending'=>'pending',
                             'processing'=>'processing',
                             'completed'=>'completed',
                             'declined'=>'declined'
                         ])->columnSpanFull()->required(),
-                        Forms\Components\MarkdownEditor::make('notes')->columnSpanFull()
+                        Forms\Components\MarkdownEditor::make('notes')
                     ])->columns(2),
                     Forms\Components\Wizard\Step::make('Order Items')->schema([
                        Forms\Components\Repeater::make('items')->relationship()->schema([
-                        Forms\Components\Select::make('product_id')->label('Product')->options(Product::query()->pluck('name','id')),
-                        Forms\Components\TextInput::make('quantity')->numeric()->default(1)->required(),
-                        Forms\Components\TextInput::make('unit_price')->label('Unit Price')->disabled()->dehydrated()->numeric()->required()
-                       ])->columns(3)
+                        Forms\Components\Select::make('product_id')->label('Product')->options(Product::query()->pluck('name','id'))->required()->reactive()->afterStateUpdated(fn($state, Forms\Set $set)=>$set('unit_price',Product::find($state)?->price??0)),
+                        Forms\Components\TextInput::make('quantity')->numeric()->live()->dehydrated(    )->default(1)->required(),
+                        Forms\Components\TextInput::make('unit_price')->label('Unit Price')->disabled()->dehydrated()->numeric()->required(),
+                        Forms\Components\Placeholder::make('total_price')->label('total price')->content(function($get){
+                            return $get('quantity') * $get('unit_price');
+                        })
+                       ])->columns(4)
                     ])
                 ])->columnSpanFull()
             ]);
@@ -62,9 +75,6 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('number')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('status')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('total_price')->searchable()->sortable()->summarize([
-                    Tables\Columns\Summarizers\Sum::make()->money()
-                ]),
                 Tables\Columns\TextColumn::make('created_at')->label('Ordered Date')->date()
             ])
             ->filters([

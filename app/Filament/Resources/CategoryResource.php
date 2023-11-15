@@ -25,6 +25,8 @@ class CategoryResource extends Resource
 
     protected static ?string $navigationGroup = 'Shop';
 
+    // protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Form $form): Form
     {
         return $form
@@ -61,7 +63,7 @@ class CategoryResource extends Resource
 
                 Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('parent.name')->label('Parnet')->searchable()->sortable(),
-                Tables\Columns\IconColumn::make('visible')->label('Visibility')->boolean()->sortable(),
+                Tables\Columns\IconColumn::make('is_visible')->label('Visibility')->boolean()->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')->label('Updated Date')->sortable()->date()
             ])
             ->filters([
@@ -85,6 +87,7 @@ class CategoryResource extends Resource
     {
         return [
             //
+            RelationManagers\ProductsRelationManager::class
         ];
     }
     
